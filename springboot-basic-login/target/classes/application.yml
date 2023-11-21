@@ -1,0 +1,21 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/security_assignment
+    username: postgres
+    password: root
+  main:
+    banner-mode: off
+
+logging:
+  level:
+    #set root logging to "WARN"
+    root: WARN
+    org:
+      springframework:
+        # set spring security logging level to "WARN"
+        security: WARN
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+

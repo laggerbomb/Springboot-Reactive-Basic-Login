@@ -1,20 +1,28 @@
 package com.example.springbootbasiclogin.service;
 
-import com.example.springbootbasiclogin.entity.User;
+import com.example.springbootbasiclogin.entity.Users;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
+@Service
 public interface UserService {
 
-    Flux<User> findAll();
+    /* Auth and Autz */
+    Mono<Boolean> isUsernameMatching(int userId, String username);
 
-    Mono<User> findById(int theId);
+    Mono<Users> findByUsername(String username);
 
-    Mono<User> save(User theUser);
+    Mono<String> logout(String username);
 
-    Mono<User> update(int id, User theUser);
+    /* Managing User Profile */
+    Flux<Users> findAll();
+
+    Mono<Users> findById(int theId);
+
+    Mono<Users> save(Users theUser);
+
+    Mono<Users> update(int id, Users theUser);
 
     Mono<Void> deleteById(int theId);
 }

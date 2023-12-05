@@ -5,6 +5,14 @@ spring:
     password: root
   main:
     banner-mode: off
+  #for email (localhost)
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail:
+        smtp:
+          auth: false
 
 logging:
   level:
@@ -18,4 +26,6 @@ logging:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+
 

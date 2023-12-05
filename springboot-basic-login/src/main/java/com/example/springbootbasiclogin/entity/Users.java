@@ -9,12 +9,18 @@ import org.springframework.data.relational.core.mapping.Table;
 @AllArgsConstructor
 @Getter @Setter
 @Table(name="users")
-public class User {
+public class Users {
 
     // define fields
     @Id
     @Column("id")
     private int id;
+
+    @Column("username")
+    private String username;
+
+    @Column("password")
+    private String password;
 
     @Column("first_name")
     private String firstName;
@@ -28,8 +34,8 @@ public class User {
     @Column("about")
     private String about;
 
-    @Column("roles")
-    private String roles;
+    @Column("job_title")
+    private String jobTitle;
 
     @Column("languages")
     private String languages;
@@ -45,4 +51,10 @@ public class User {
 
     @Column("profile_pic")
     private String profilePic;
+
+    @Column("active")
+    private boolean active;
+
+    @Column("verified")
+    private boolean verified;
 }

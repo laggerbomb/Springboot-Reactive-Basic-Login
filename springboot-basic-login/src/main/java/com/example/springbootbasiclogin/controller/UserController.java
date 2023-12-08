@@ -15,8 +15,6 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-
 @RestController
 public class UserController {
 
@@ -27,45 +25,6 @@ public class UserController {
     public UserController(UserService userService, AuthService authService) {
         this.userService = userService;
         this.authService = authService;
-    }
-
-    /* Auth and Autz */
-    @PutMapping("/login")
-    @ResponseStatus(HttpStatus.OK)
-    public Mono<String> loginUser(@RequestBody Users theUser) {
-        return authService.loginUser(theUser.getUsername(), theUser.getPassword())
-                .map(user -> "Login successful for user: " + user.getUsername())
-                .defaultIfEmpty("Wrong password or username");
-    }
-
-    @PostMapping("/register")
-    public Mono<Users> registerUser(@RequestBody Map<String, String> payload){
-        String username = payload.get("username");
-        String password = payload.get("password");
-        String role = payload.get("role");
-        String email = payload.get("email");
-        return authService.registerUser(username, password, role, email);
-    }
-
-    @GetMapping("/verify-email/{verificationToken}")
-    public Mono<String> verifyEmail(@PathVariable String verificationToken) {
-        return authService.verifyEmail(verificationToken);
-    }
-
-    @PostMapping("/fp")
-    public Mono<String> forgetPassword(@RequestBody Users users){
-        return authService.forgetPassword(users.getEmail());
-    }
-
-    @PostMapping("/reset-password/{verificationToken}")
-    public Mono<String> resetPassword(@PathVariable String verificationToken,
-                                      @RequestBody Users users) {
-        return authService.resetPassword(verificationToken, users.getPassword());
-    }
-
-    @GetMapping("/logout")
-    public Mono<String> logout( @AuthenticationPrincipal UserDetails auth) {
-        return userService.logout(auth.getUsername());
     }
 
     /* Managing User Profile */
@@ -81,17 +40,6 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public Mono<Users> getUser(@PathVariable int userId) {
         return userService.findById(userId);
-    }
-
-    // add mapping for POST /users - add new user
-    @PreAuthorize("authenticated")
-    @PostMapping("/users")
-    @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Users> addUser(@RequestBody Users theUser) {
-        // also just in case they pass an id in JSON ... set id to 0
-        // this is to force a save of new item ... instead of update
-        theUser.setId(0);
-        return userService.save(theUser);
     }
 
     // add mapping for PUT /users - update existing user

@@ -34,6 +34,7 @@ public class TestSecurity {
                     .anyExchange().permitAll()
             )
             .httpBasic(Customizer.withDefaults())
+            .formLogin(Customizer.withDefaults())
             .authenticationManager(authenticationManager(reactiveUserDetailsService))
             .csrf(ServerHttpSecurity.CsrfSpec::disable); // Disable CSRF for simplicity, adapt as needed
 

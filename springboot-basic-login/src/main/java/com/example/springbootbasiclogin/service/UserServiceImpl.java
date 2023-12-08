@@ -3,14 +3,12 @@ package com.example.springbootbasiclogin.service;
 import com.example.springbootbasiclogin.entity.Users;
 import com.example.springbootbasiclogin.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Field;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -34,18 +32,6 @@ public class UserServiceImpl implements UserService{
     @Override
     public Mono<Users> findByUsername(String username) {
         return userRepository.findByUsername(username);
-    }
-
-    @Override
-    public Mono<String> logout(String username) {
-        return userRepository.findByUsername(username)
-            .flatMap(user -> {
-                user.setActive(false);
-                return userRepository.save(user)
-                        .doOnSuccess(success -> SecurityContextHolder.clearContext())
-                    .thenReturn("Logout successful");
-            })
-            .defaultIfEmpty("No User found with username: "+ username);
     }
 
     /* Managing User Profile */

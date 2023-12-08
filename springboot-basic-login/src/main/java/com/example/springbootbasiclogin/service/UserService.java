@@ -13,8 +13,6 @@ public interface UserService {
 
     Mono<Users> findByUsername(String username);
 
-    Mono<String> logout(String username);
-
     /* Managing User Profile */
     Flux<Users> findAll();
 

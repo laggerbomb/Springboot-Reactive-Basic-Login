@@ -6,9 +6,13 @@ import com.example.springbootbasiclogin.entity.VerificationToken;
 import com.example.springbootbasiclogin.repo.RoleRepository;
 import com.example.springbootbasiclogin.repo.UserRepository;
 import com.example.springbootbasiclogin.repo.VerificationTokenRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.io.UnsupportedEncodingException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -89,13 +94,20 @@ public class AuthService implements ReactiveUserDetailsService{
 
                 return roleRepository.save(roles)  //save the role to db
                     .then(savedToken
-                        .doOnSuccess(tokenSaved ->
-                            sendEmail(savedUser.getEmail(), tokenSaved.getToken(),
-                            "Email Verification",
-                                "Thank you for registering. " +
-                                    "Please click on the link to verify your email: " +
-                                    "http://localhost:8080/verify-email/" ))
-                        .thenReturn(savedUser));
+                        .doOnSuccess(tokenSaved -> {
+                            String subject = "Email Verification";
+                            String content = "Please click the link below to verify your registration:<br>"
+                                + "<h3><a href=\"[[URL]]\">VERIFY</a></h3>"
+                                + "Thank you,<br>"
+                                + "Your company name.";
+
+                            String verifyURL =  "http://localhost:8080/verify-email/" + tokenSaved.getToken();
+                            content = content.replace("[[URL]]", verifyURL);
+
+                            sendEmail(savedUser.getEmail(), subject, content);
+                        })
+                        .thenReturn(savedUser)
+                    );
             });
     }
 
@@ -120,12 +132,15 @@ public class AuthService implements ReactiveUserDetailsService{
             .flatMap(user ->{
                 Mono<VerificationToken> savedToken = generateToken(user);
                 return savedToken
-                    .doOnSuccess(tokenSaved ->
-                        sendEmail(user.getEmail(), tokenSaved.getToken(),
-                        "Forget Email",
-                        "Forget Email? " +
-                                "Please click on the link to change your password: " +
-                                "http://localhost:8080/reset-password/" ))
+                    .doOnSuccess(tokenSaved ->{
+                        String subject = "Reset Password";
+                        String content = "Forget Password? Please click the link below to to change your password:<br>"
+                                + "<h3>http://localhost:8080/reset-password/" + tokenSaved.getToken()+ "</h3>"
+                                + "Bye Bye, Regards from:<br>"
+                                + "Your company name.";
+
+                        sendEmail(user.getEmail(), subject, content);
+                    })
                     .thenReturn("Do check your email for resetting password")
                     .defaultIfEmpty("Error! cannot save Verification Token");
             })
@@ -149,6 +164,17 @@ public class AuthService implements ReactiveUserDetailsService{
             });
     }
 
+    public Mono<String> logout(String username) {
+        return userRepository.findByUsername(username)
+            .flatMap(user -> {
+                user.setActive(false);
+                return userRepository.save(user)
+                    .doOnSuccess(success -> SecurityContextHolder.clearContext())
+                    .thenReturn("Logout successful");
+            })
+            .defaultIfEmpty("No User found with username: "+ username);
+    }
+
     private Mono<VerificationToken> generateToken(Users savedUser) {
         return verificationTokenRepository.findByUserId(savedUser.getId())
             .flatMap(existingToken -> {
@@ -165,11 +191,21 @@ public class AuthService implements ReactiveUserDetailsService{
             }));
     }
 
-    private void sendEmail(String to, String verificationToken, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setSubject(subject);
-        message.setText(text + verificationToken);
-        message.setTo(to);
+    private void sendEmail(String to,String subject, String text) {
+        String fromAddress = "noreply@yourdomain.com";
+        String senderName = "Your Company";
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        try {
+            helper.setFrom(fromAddress, senderName);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, true);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
 
         mailSender.send(message);
     }

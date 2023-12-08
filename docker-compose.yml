@@ -1,0 +1,39 @@
+version: '3.9'
+services:
+  db:
+    container_name: postgres_db
+    image: postgres:15
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /data/postgres
+    volumes:
+      - db:/data/postgres
+    networks:
+      - db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d postgres" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  maildev:
+    image: maildev/maildev
+    container_name: my_maildev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+    volumes:
+      - maildev_data:/usr/src/app
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  maildev_data:
+  db:
